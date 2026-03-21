@@ -1,0 +1,9 @@
+# Ignoră fișierele media descărcate sau adăugate local
+media/**/*.mp3
+media/**/*.flac
+media/**/*.wav
+media/**/*.m4a
+media/**/*.ogg
+
+# Ignoră socket-urile temporare în caz că sunt create accidental aici
+*.sock

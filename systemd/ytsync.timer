@@ -1,0 +1,9 @@
+[Unit]
+Description=Timer orar pentru yt_sync
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
