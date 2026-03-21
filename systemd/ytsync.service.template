@@ -4,7 +4,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/home/stefantacu/github/music-player-service/scripts/yt_sync.sh
-WorkingDirectory=/home/stefantacu/github/music-player-service
+ExecStart=REPO_PATH/scripts/yt_sync.sh
+WorkingDirectory=REPO_PATH
 StandardOutput=journal
 StandardError=journal
