@@ -2,36 +2,46 @@
 
 # Detectează automat locația de unde se rulează scriptul de instalare
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
 
-echo "[1/4] Creare structură directoare în $REPO_DIR..."
+# Detectare shell configuration file
+if [[ "$SHELL" == *"zsh"* ]]; then
+    SHELL_RC="$HOME/.zshrc"
+elif [[ "$SHELL" == *"bash"* ]]; then
+    SHELL_RC="$HOME/.bashrc"
+else
+    SHELL_RC="$HOME/.bashrc"
+fi
+
+echo "[1/3] Creare structură directoare în $REPO_DIR..."
 mkdir -p "$REPO_DIR"/media/{YouTube_Sync,Arhiva_Personala}
 touch "$REPO_DIR"/{links.txt,downloaded.txt}
 
-echo "[2/4] Generare și instalare Systemd..."
-mkdir -p "$SYSTEMD_USER_DIR"
-# Generăm fișierul .service din template, înlocuind placeholder-ul cu calea reală
-sed "s|REPO_PATH|$REPO_DIR|g" "$REPO_DIR/systemd/ytsync.service.template" > "$SYSTEMD_USER_DIR/ytsync.service"
-ln -sf "$REPO_DIR/systemd/ytsync.timer" "$SYSTEMD_USER_DIR/ytsync.timer"
-
-echo "[3/4] Activare servicii de fundal..."
-systemctl --user daemon-reload
-systemctl --user enable --now ytsync.timer
-
-echo "[4/4] Configurare ~/.bashrc..."
+echo "[2/3] Configurare $SHELL_RC..."
 # Exportăm variabila globală pentru proiect
-if ! grep -q "export MUSIC_SERVICE_DIR=\"$REPO_DIR\"" ~/.bashrc; then
-    echo "export MUSIC_SERVICE_DIR=\"$REPO_DIR\"" >> ~/.bashrc
+if ! grep -q "export MUSIC_SERVICE_DIR=\"$REPO_DIR\"" "$SHELL_RC"; then
+    echo -e "\n# Music Player Service (MANUAL)" >> "$SHELL_RC"
+    echo "export MUSIC_SERVICE_DIR=\"$REPO_DIR\"" >> "$SHELL_RC"
 fi
 
 # Sursă pentru alias-uri
-if ! grep -q "source \$MUSIC_SERVICE_DIR/aliases.sh" ~/.bashrc; then
-    echo "source \$MUSIC_SERVICE_DIR/aliases.sh" >> ~/.bashrc
-    echo "Configurarea a fost adăugată în ~/.bashrc"
+if ! grep -q "source \$MUSIC_SERVICE_DIR/aliases.sh" "$SHELL_RC"; then
+    echo "source \$MUSIC_SERVICE_DIR/aliases.sh" >> "$SHELL_RC"
 fi
 
+echo "[3/3] Curățare eventuale urme Systemd vechi..."
+systemctl --user stop ytsync.timer ytsync.service 2>/dev/null
+systemctl --user disable ytsync.timer ytsync.service 2>/dev/null
+rm -f "$HOME/.config/systemd/user/ytsync.service"
+rm -f "$HOME/.config/systemd/user/ytsync.timer"
+
 echo "--------------------------------------------------------"
-echo "Instalare finalizată în: $REPO_DIR"
-echo "Executați: 'source ~/.bashrc' pentru a activa comenzile."
-echo "Comenzi disponibile: play-music, stop-music, add-song <URL>"
+echo "Instalare MANUALĂ finalizată în: $REPO_DIR"
+echo "Executați: 'source $SHELL_RC' pentru a activa comenzile."
+echo ""
+echo "COMENZI DISPONIBILE:"
+echo "  add-song <URL>          -> Adaugă în listă fără descărcare"
+echo "  add-song <URL> --sync   -> Adaugă și pornește descărcarea imediat"
+echo "  sync-music              -> Pornește sincronizarea manuală (Progress Bar fixat)"
+echo "  play-music              -> Pornește player-ul"
+echo "  stop-music              -> Oprește player-ul"
 echo "--------------------------------------------------------"
